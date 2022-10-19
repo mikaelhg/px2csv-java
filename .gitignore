@@ -1,35 +1,12 @@
+/.idea
 .gradle
-build/
-!gradle/wrapper/gradle-wrapper.jar
-
-### IntelliJ IDEA ###
-.idea
+.vscode/
+.DS_Store
 *.iws
 *.iml
 *.ipr
 out/
-
-### Eclipse ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+build/
 bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-
-### VS Code ###
-.vscode/
-
-### Mac OS ###
-.DS_Store
+!gradle/wrapper/gradle-wrapper.jar
