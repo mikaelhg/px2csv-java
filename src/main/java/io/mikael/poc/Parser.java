@@ -130,6 +130,7 @@ public class Parser {
     }
 
     public void parseDataDense(final BufferedReader input) {
+
     }
 
 }
