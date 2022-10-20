@@ -6,7 +6,6 @@ import io.mikael.poc.dto.RowAccumulator;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.CharBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -16,7 +15,8 @@ import static java.util.Collections.singletonList;
 
 public class Parser {
 
-    private static final int DATA_VALUE_WIDTH = 128;
+    /* Maximum width, in characters, the string representation of a decimal number can be. */
+    public static final int DATA_VALUE_WIDTH = 128;
 
     protected final StatCubeCsvWriter writer;
 
@@ -26,7 +26,11 @@ public class Parser {
 
     protected List<PxHeaderRow> headers = new ArrayList<>();
 
-    public List<String> header(
+    public Parser(final StatCubeCsvWriter writer) {
+        this.writer = writer;
+    }
+
+    private List<String> header(
             final String keyword, final String language, final List<String> subkeys)
     {
         return headers.stream()
@@ -38,10 +42,6 @@ public class Parser {
 
     private List<String> valueHeader(final String subkey) {
         return this.header("VALUES", "", singletonList(subkey));
-    }
-
-    public Parser(final StatCubeCsvWriter writer) {
-        this.writer = writer;
     }
 
     public void parseHeader(final BufferedReader input) throws IOException {
@@ -132,15 +132,15 @@ public class Parser {
         }
     }
 
-    private record DenseStub(List<String> stub, CartesianProduct stubFlattener, int stubWidth) {}
+    public record DenseStub(List<String> stub, CartesianProduct stubFlattener, int stubWidth) {}
 
-    private DenseStub denseStub() {
+    public DenseStub denseStub() {
         final var stub = this.header("STUB", "", emptyList());
         final var stubValues = stub.stream().map(this::valueHeader).toList();
         return new DenseStub(stub, CartesianProduct.of(stubValues), stub.size());
     }
 
-    private CartesianProduct denseHeading() {
+    public CartesianProduct denseHeading() {
         final var heading = this.header("HEADING", "", emptyList());
         final var headingValues = heading.stream().map(this::valueHeader).toList();
         return CartesianProduct.of(headingValues);
@@ -154,8 +154,7 @@ public class Parser {
 
         int bufLength = 0;
         int currentValue = 0;
-        final var buf = CharBuffer.allocate(headingWidth*DATA_VALUE_WIDTH);
-        final var values = new CharBuffer[headingWidth];
+        final var buffer = new char[headingWidth*DATA_VALUE_WIDTH];
         final var valueLengths = new int[headingWidth];
 
         int base = 0;
@@ -168,7 +167,6 @@ public class Parser {
 
             } else if (c == ' ' || c == '\n' || c == '\r' || c == ';') {
                 if (bufLength > 0) {
-                    values[currentValue] = buf.slice(base, bufLength);
                     valueLengths[currentValue] = bufLength;
                     bufLength = 0;
                     currentValue += 1;
@@ -176,11 +174,11 @@ public class Parser {
                 if (currentValue == headingWidth) {
                     currentValue = 0;
                     final var currentStubs = ds.stubFlattener.next();
-                    this.writer.writeRow(currentStubs, values, valueLengths, headingWidth);
+                    this.writer.writeRow(currentStubs, buffer, valueLengths, headingWidth);
                 }
 
             } else {
-                buf.put(base + bufLength, c);
+                buffer[base + bufLength] = c;
                 bufLength += 1;
 
             }

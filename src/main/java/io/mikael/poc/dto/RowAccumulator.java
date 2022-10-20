@@ -3,7 +3,7 @@ package io.mikael.poc.dto;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RowAccumulator {
+public final class RowAccumulator {
 
     public StringBuilder keyword;
 

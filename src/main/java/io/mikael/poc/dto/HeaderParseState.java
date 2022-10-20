@@ -1,6 +1,6 @@
 package io.mikael.poc.dto;
 
-public class HeaderParseState {
+public final class HeaderParseState {
 
     public int quotes;
 

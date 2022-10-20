@@ -2,10 +2,11 @@ package io.mikael.poc;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.nio.CharBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static io.mikael.poc.Parser.DATA_VALUE_WIDTH;
 
 public class StatCubeCsvWriter {
 
@@ -25,15 +26,15 @@ public class StatCubeCsvWriter {
         out.write("\"\n");
     }
 
-    public void writeRow(String[] currentStubs, CharBuffer[] values,
-                         int[] valueLengths, int headingWidth) throws IOException
+    public void writeRow(final String[] currentStubs, final char[] buffer,
+                         final int[] valueLengths, final int headingWidth) throws IOException
     {
         out.write("\"");
         out.write(String.join("\";\"", currentStubs));
         out.write("\";");
         for (int i = 0; i < headingWidth; i++) {
-            out.write(values[i].toString());
-            // out.write(values[i].array(), values[i].position(), valueLengths[i]);
+            final var offset = i * DATA_VALUE_WIDTH;
+            out.write(buffer, offset, valueLengths[i]);
             if (i < headingWidth - 1) {
                 out.write(';');
             }

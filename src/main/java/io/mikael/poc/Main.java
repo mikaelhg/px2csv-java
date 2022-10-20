@@ -12,7 +12,7 @@ public class Main {
     public static void main(final String[] args) throws Exception {
         final var pxFile = Paths.get(args[0]);
         try (var input = Files.newBufferedReader(pxFile, ISO_8859_1);
-             var fileWriter = new FileWriter(args[1]);
+             var fileWriter = new FileWriter(args[1], ISO_8859_1);
              var output = new BufferedWriter(fileWriter))
         {
             final var writer = new StatCubeCsvWriter(output);
