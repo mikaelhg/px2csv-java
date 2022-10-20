@@ -152,13 +152,13 @@ public class Parser {
         final var headingWidth = headingFlattener.permutationCount();
         this.writer.writeHeading(ds.stub, headingFlattener);
 
-        int base = 0;
         int bufLength = 0;
         int currentValue = 0;
         final var buf = CharBuffer.allocate(headingWidth*DATA_VALUE_WIDTH);
         final var values = new CharBuffer[headingWidth];
         final var valueLengths = new int[headingWidth];
 
+        int base = 0;
         int i = -1;
         while ((i = input.read()) != -1) {
             final char c = (char) i;

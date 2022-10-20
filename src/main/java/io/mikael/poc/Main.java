@@ -9,7 +9,7 @@ import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 public class Main {
 
-    public static void main(String[] args) throws Exception {
+    public static void main(final String[] args) throws Exception {
         final var pxFile = Paths.get(args[0]);
         try (var input = Files.newBufferedReader(pxFile, ISO_8859_1);
              var fileWriter = new FileWriter(args[1]);

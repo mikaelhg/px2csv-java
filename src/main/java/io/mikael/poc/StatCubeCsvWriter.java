@@ -32,7 +32,8 @@ public class StatCubeCsvWriter {
         out.write(String.join("\";\"", currentStubs));
         out.write("\";");
         for (int i = 0; i < headingWidth; i++) {
-            out.write(values[i].array(), 0, valueLengths[i]);
+            out.write(values[i].toString());
+            // out.write(values[i].array(), values[i].position(), valueLengths[i]);
             if (i < headingWidth - 1) {
                 out.write(';');
             }
