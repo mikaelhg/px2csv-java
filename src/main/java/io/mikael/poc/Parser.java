@@ -149,7 +149,7 @@ public class Parser {
     public void parseDataDense(final BufferedReader input) throws IOException {
         final var ds = this.denseStub();
         final var headingFlattener = this.denseHeading();
-        final var headingWidth = headingFlattener.permutationCount();
+        final var headingWidth = headingFlattener.permutationCount;
         this.writer.writeHeading(ds.stub, headingFlattener);
 
         int bufLength = 0;

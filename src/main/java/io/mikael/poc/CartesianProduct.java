@@ -6,15 +6,17 @@ import java.util.List;
 
 public class CartesianProduct implements Iterator<String[]> {
 
-    public int length = 0;
+    public int cursor = 0;
 
     public int[] counters;
 
-    public int[] lengths;
+    public final int length;
 
-    public String[][] lists;
+    public final int permutationCount;
 
-    public boolean hasNext = true;
+    public final int[] lengths;
+
+    public final String[][] lists;
 
     public static CartesianProduct of(final List<List<String>> input) {
         final var lists = new String[input.size()][];
@@ -34,11 +36,12 @@ public class CartesianProduct implements Iterator<String[]> {
         for (int i = 0; i < length; i++) {
             lengths[i] = lists[i].length;
         }
+        this.permutationCount = Arrays.stream(lengths).reduce(1, (a, b) -> a * b);
     }
 
     @Override
     public boolean hasNext() {
-        return this.hasNext;
+        return this.cursor < this.permutationCount;
     }
 
     @Override
@@ -47,7 +50,7 @@ public class CartesianProduct implements Iterator<String[]> {
         for (int i = 0; i < length; i++) {
             ret[i] = lists[i][counters[i]];
         }
-        this.hasNext = this.step();
+        this.step();
         return ret;
     }
 
@@ -55,6 +58,7 @@ public class CartesianProduct implements Iterator<String[]> {
         for (int i = length - 1; i >= 0; i--) {
             if (counters[i] < lengths[i] - 1) {
                 counters[i] += 1;
+                this.cursor += 1;
                 return true;
             } else {
                 counters[i] = 0;
@@ -63,13 +67,9 @@ public class CartesianProduct implements Iterator<String[]> {
         return false;
     }
 
-    public int permutationCount() {
-        return Arrays.stream(lengths).reduce(1, (a, b) -> a * b);
-    }
-
     public String[][] all() {
-        final var result = new String[this.permutationCount()][];
-        for (int i = 0; i < this.permutationCount(); i++) {
+        final var result = new String[this.permutationCount][];
+        for (int i = 0; i < this.permutationCount; i++) {
             result[i] = this.next();
         }
         return result;
