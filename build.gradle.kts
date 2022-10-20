@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("application")
     id("org.graalvm.buildtools.native") version "0.9.16"
 }
 
@@ -17,6 +18,10 @@ dependencies {
 
 tasks.getByName<Test>("test") {
     useJUnitPlatform()
+}
+
+application {
+    mainClass.set("io.mikael.poc.Main")
 }
 
 graalvmNative {

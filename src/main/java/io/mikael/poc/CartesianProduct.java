@@ -2,6 +2,7 @@ package io.mikael.poc;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 
 public class CartesianProduct implements Iterator<String[]> {
 
@@ -15,9 +16,19 @@ public class CartesianProduct implements Iterator<String[]> {
 
     public boolean hasNext = true;
 
-    public CartesianProduct(final String[][] lists) {
-        this.lists = lists;
-        this.length = lists.length;
+    public static CartesianProduct of(final List<List<String>> input) {
+        final var lists = new String[input.size()][];
+        for (int i = 0; i < lists.length; i++) {
+            final var ll = input.get(i);
+            lists[i] = new String[ll.size()];
+            ll.toArray(lists[i]);
+        }
+        return new CartesianProduct(lists);
+    }
+
+    public CartesianProduct(final String[][] input) {
+        this.lists = input;
+        this.length = input.length;
         this.counters = new int[length];
         this.lengths = new int[length];
         for (int i = 0; i < length; i++) {

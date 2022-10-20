@@ -6,14 +6,17 @@ import io.mikael.poc.dto.RowAccumulator;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.CharBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 public class Parser {
+
+    private static final int DATA_VALUE_WIDTH = 128;
 
     protected final StatCubeCsvWriter writer;
 
@@ -34,7 +37,7 @@ public class Parser {
     }
 
     private List<String> valueHeader(final String subkey) {
-        return this.header("VALUES", null, singletonList(subkey));
+        return this.header("VALUES", "", singletonList(subkey));
     }
 
     public Parser(final StatCubeCsvWriter writer) {
@@ -129,7 +132,59 @@ public class Parser {
         }
     }
 
-    public void parseDataDense(final BufferedReader input) {
+    private record DenseStub(List<String> stub, CartesianProduct stubFlattener, int stubWidth) {}
+
+    private DenseStub denseStub() {
+        final var stub = this.header("STUB", "", emptyList());
+        final var stubValues = stub.stream().map(this::valueHeader).toList();
+        return new DenseStub(stub, CartesianProduct.of(stubValues), stub.size());
+    }
+
+    private CartesianProduct denseHeading() {
+        final var heading = this.header("HEADING", "", emptyList());
+        final var headingValues = heading.stream().map(this::valueHeader).toList();
+        return CartesianProduct.of(headingValues);
+    }
+
+    public void parseDataDense(final BufferedReader input) throws IOException {
+        final var ds = this.denseStub();
+        final var headingFlattener = this.denseHeading();
+        final var headingWidth = headingFlattener.permutationCount();
+        this.writer.writeHeading(ds.stub, headingFlattener);
+
+        int base = 0;
+        int bufLength = 0;
+        int currentValue = 0;
+        final var buf = CharBuffer.allocate(headingWidth*DATA_VALUE_WIDTH);
+        final var values = new CharBuffer[headingWidth];
+        final var valueLengths = new int[headingWidth];
+
+        int i = -1;
+        while ((i = input.read()) != -1) {
+            final char c = (char) i;
+            base = DATA_VALUE_WIDTH * currentValue;
+            if (c == '"') {
+                continue;
+
+            } else if (c == ' ' || c == '\n' || c == '\r' || c == ';') {
+                if (bufLength > 0) {
+                    values[currentValue] = buf.slice(base, bufLength);
+                    valueLengths[currentValue] = bufLength;
+                    bufLength = 0;
+                    currentValue += 1;
+                }
+                if (currentValue == headingWidth) {
+                    currentValue = 0;
+                    final var currentStubs = ds.stubFlattener.next();
+                    this.writer.writeRow(currentStubs, values, valueLengths, headingWidth);
+                }
+
+            } else {
+                buf.put(base + bufLength, c);
+                bufLength += 1;
+
+            }
+        }
 
     }
 
