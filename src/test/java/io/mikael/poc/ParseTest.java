@@ -1,30 +1,31 @@
 package io.mikael.poc;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.*;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 public class ParseTest {
 
-    static final String FILE_NAME = "/home/mikael/devel/hobbies/gpcaxis/data/statfin_akay_pxt_005.px";
-
     @Test
-    public void parseTest() throws IOException {
-        final var pxFile = Paths.get(FILE_NAME);
-        try (var input = Files.newBufferedReader(pxFile, ISO_8859_1);
-             var output = new BufferedWriter(new OutputStreamWriter(System.out))) {
+    public void parseStatic() throws IOException {
+        final var cl = this.getClass().getClassLoader();
+        try (var px = cl.getResourceAsStream("test_1.px");
+             var csv = cl.getResourceAsStream("test_1.csv");
+             var input = new BufferedReader(new InputStreamReader(px));
+             var stringWriter = new StringWriter();
+             var output = new BufferedWriter(stringWriter))
+        {
             final var writer = new StatCubeCsvWriter(output);
             final var parser = new Parser(writer);
             parser.parseHeader(input);
             parser.parseDataDense(input);
-            // System.out.println(parser.headers);
-            // System.out.println(parser.headers.get(32));
+            output.flush();
+            final var result = stringWriter.toString();
+            final var expected = new String(csv.readAllBytes(), ISO_8859_1);
+            Assertions.assertEquals(expected, result);
         }
     }
 

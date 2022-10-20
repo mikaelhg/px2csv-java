@@ -186,6 +186,7 @@ public class Parser {
             }
         }
 
+        this.writer.writeFooting();
     }
 
 }
