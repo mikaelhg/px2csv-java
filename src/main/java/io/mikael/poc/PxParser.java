@@ -1,6 +1,6 @@
 package io.mikael.poc;
 
-import io.mikael.poc.dto.HeaderParseState;
+import io.mikael.poc.dto.PxParserState;
 import io.mikael.poc.dto.PxHeaderRow;
 import io.mikael.poc.dto.RowAccumulator;
 
@@ -13,20 +13,20 @@ import java.util.Objects;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
-public class Parser {
+public class PxParser {
 
     /* Maximum width, in characters, the string representation of a decimal number can be. */
     public static final int DATA_VALUE_WIDTH = 128;
 
-    protected final StatCubeCsvWriter writer;
+    protected final StatCubeWriter writer;
 
-    protected final HeaderParseState hps = new HeaderParseState();
+    protected final PxParserState state = new PxParserState();
 
     protected RowAccumulator row = new RowAccumulator();
 
     protected List<PxHeaderRow> headers = new ArrayList<>();
 
-    public Parser(final StatCubeCsvWriter writer) {
+    public PxParser(final StatCubeWriter writer) {
         this.writer = writer;
     }
 
@@ -45,17 +45,16 @@ public class Parser {
     }
 
     public void parseHeader(final BufferedReader input) throws IOException {
-        int i = -1;
-        while ((i = input.read()) != -1) {
+        for (int i = input.read(); i != -1; i = input.read()) {
             final char c = (char) i;
-            final var inQuotes = this.hps.quotes % 2 == 1;
-            final var inParenthesis = this.hps.parenthesisOpen > this.hps.parenthesisClose;
-            final var inKey = this.hps.semicolons == this.hps.equals;
-            final var inLanguage = inKey && this.hps.squareBracketOpen > this.hps.squareBracketClose;
+            final var inQuotes = this.state.quotes % 2 == 1;
+            final var inParenthesis = this.state.parenthesisOpen > this.state.parenthesisClose;
+            final var inKey = this.state.semicolons == this.state.equals;
+            final var inLanguage = inKey && this.state.squareBracketOpen > this.state.squareBracketClose;
             final var inSubkey = inKey && inParenthesis;
 
             if (c == '"') {
-                this.hps.quotes += 1;
+                this.state.quotes += 1;
 
             } else if ((c == '\n' || c == '\r') && inQuotes) {
                 throw new RuntimeException("there can't be newlines inside quoted strings");
@@ -64,27 +63,27 @@ public class Parser {
                 continue;
                 
             } else if (c == '[' && inKey && !inQuotes) {
-                this.hps.squareBracketOpen += 1;
+                this.state.squareBracketOpen += 1;
 
             } else if (c == ']' && inKey && !inQuotes) {
-                this.hps.squareBracketClose += 1;
+                this.state.squareBracketClose += 1;
 
             } else if (c == '(' && inKey && !inQuotes) {
-                this.hps.parenthesisOpen += 1;
+                this.state.parenthesisOpen += 1;
 
             } else if (c == '(' && !inKey && !inQuotes) {
                 // TLIST opening quote
-                this.hps.parenthesisOpen += 1;
+                this.state.parenthesisOpen += 1;
                 this.row.value.append(c);
 
             } else if (c == ')' && inKey && !inQuotes) {
-                this.hps.parenthesisClose += 1;
+                this.state.parenthesisClose += 1;
                 this.row.subkeys.add(this.row.subkey.toString());
                 this.row.subkey = new StringBuilder();
 
             } else if (c == ')' && !inKey && !inQuotes) {
                 // TLIST closing quote
-                this.hps.parenthesisClose += 1;
+                this.state.parenthesisClose += 1;
                 this.row.value.append(c);
 
             } else if (c == ',' && inSubkey && !inQuotes) {
@@ -102,7 +101,7 @@ public class Parser {
                 if (this.row.keyword.toString().equals("DATA")) {
                     return;
                 }
-                this.hps.equals += 1;
+                this.state.equals += 1;
 
             } else if (c == ';' && inKey && !inQuotes) {
                 throw new RuntimeException("found a semicolon without a matching equals sign, value terminator without keyword terminator");
@@ -111,7 +110,7 @@ public class Parser {
                 if (this.row.value.length() > 0) {
                     this.row.values.add(this.row.value.toString());
                 }
-                this.hps.semicolons += 1;
+                this.state.semicolons += 1;
                 this.headers.add(this.row.toPxHeaderRow());
                 this.row = new RowAccumulator();
                 continue;
@@ -150,18 +149,17 @@ public class Parser {
         final var ds = this.denseStub();
         final var headingFlattener = this.denseHeading();
         final var headingWidth = headingFlattener.permutationCount;
+
         this.writer.writeHeading(ds.stub, headingFlattener);
 
-        int bufLength = 0;
-        int currentValue = 0;
         final var buffer = new char[headingWidth*DATA_VALUE_WIDTH];
         final var valueLengths = new int[headingWidth];
+        int bufLength = 0;
+        int currentValue = 0;
 
-        int base = 0;
-        int i = -1;
-        while ((i = input.read()) != -1) {
+        for (int i = input.read(); i != -1; i = input.read()) {
             final char c = (char) i;
-            base = DATA_VALUE_WIDTH * currentValue;
+            final var base = DATA_VALUE_WIDTH * currentValue;
             if (c == '"') {
                 continue;
 

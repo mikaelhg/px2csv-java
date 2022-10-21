@@ -19,7 +19,7 @@ public class ParseTest {
              var output = new BufferedWriter(stringWriter))
         {
             final var writer = new StatCubeCsvWriter(output);
-            final var parser = new Parser(writer);
+            final var parser = new PxParser(writer);
             parser.parseHeader(input);
             parser.parseDataDense(input);
             output.flush();

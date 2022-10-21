@@ -6,9 +6,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static io.mikael.poc.Parser.DATA_VALUE_WIDTH;
+import static io.mikael.poc.PxParser.DATA_VALUE_WIDTH;
 
-public class StatCubeCsvWriter {
+public class StatCubeCsvWriter implements StatCubeWriter {
 
     private final BufferedWriter out;
 
@@ -16,6 +16,7 @@ public class StatCubeCsvWriter {
         this.out = out;
     }
 
+    @Override
     public void writeHeading(List<String> stub, CartesianProduct headingFlattener) throws IOException {
         out.write("\"");
         out.write(String.join("\";\"", stub));
@@ -26,11 +27,12 @@ public class StatCubeCsvWriter {
         out.write("\"\n");
     }
 
-    public void writeRow(final String[] currentStubs, final char[] buffer,
+    @Override
+    public void writeRow(final String[] stubs, final char[] buffer,
                          final int[] valueLengths, final int headingWidth) throws IOException
     {
         out.write("\"");
-        out.write(String.join("\";\"", currentStubs));
+        out.write(String.join("\";\"", stubs));
         out.write("\";");
         for (int i = 0; i < headingWidth; i++) {
             final var offset = i * DATA_VALUE_WIDTH;
@@ -42,6 +44,7 @@ public class StatCubeCsvWriter {
         out.write('\n');
     }
 
+    @Override
     public void writeFooting() {
 
     }
