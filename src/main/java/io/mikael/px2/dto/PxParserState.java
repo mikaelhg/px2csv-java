@@ -1,4 +1,4 @@
-package io.mikael.poc.dto;
+package io.mikael.px2.dto;
 
 public final class PxParserState {
 

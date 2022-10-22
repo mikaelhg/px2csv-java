@@ -1,8 +1,8 @@
-package io.mikael.poc;
+package io.mikael.px2;
 
-import io.mikael.poc.dto.PxParserState;
-import io.mikael.poc.dto.PxHeaderRow;
-import io.mikael.poc.dto.RowAccumulator;
+import io.mikael.px2.dto.PxParserState;
+import io.mikael.px2.dto.PxHeaderRow;
+import io.mikael.px2.dto.RowAccumulator;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,6 +17,14 @@ public class PxParser {
 
     /* Maximum width, in characters, the string representation of a decimal number can be. */
     public static final int DATA_VALUE_WIDTH = 128;
+
+    public static final int PAGE_SIZE = 4096;
+
+    protected final char[] readBuffer = new char[PAGE_SIZE + 128];
+
+    protected int readOffset = 0;
+
+    protected int readLength = 0;
 
     protected final StatCubeWriter writer;
 
@@ -61,7 +69,7 @@ public class PxParser {
 
             } else if ((c == '\n' || c == '\r') && !inQuotes) {
                 continue;
-                
+
             } else if (c == '[' && inKey && !inQuotes) {
                 this.state.squareBracketOpen += 1;
 
@@ -117,7 +125,7 @@ public class PxParser {
 
             } else if (inSubkey) {
                 this.row.subkey.append(c);
-                
+
             } else if (inLanguage) {
                 this.row.language.append(c);
 
@@ -152,7 +160,6 @@ public class PxParser {
 
         this.writer.writeHeading(ds.stub, headingFlattener);
 
-        final var readBuffer = new char[4096];
         final var buffer = new char[headingWidth*DATA_VALUE_WIDTH];
         final var valueLengths = new int[headingWidth];
         int bufLength = 0;

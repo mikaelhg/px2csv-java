@@ -1,4 +1,4 @@
-package io.mikael.poc;
+package io.mikael.px2;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static io.mikael.poc.PxParser.DATA_VALUE_WIDTH;
+import static io.mikael.px2.PxParser.DATA_VALUE_WIDTH;
 
 public final class StatCubeCsvWriter implements StatCubeWriter {
 

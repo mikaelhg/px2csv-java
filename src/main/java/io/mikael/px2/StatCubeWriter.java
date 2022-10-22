@@ -1,4 +1,4 @@
-package io.mikael.poc;
+package io.mikael.px2;
 
 import java.io.IOException;
 import java.util.List;

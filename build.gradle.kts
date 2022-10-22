@@ -3,7 +3,7 @@ plugins {
     id("org.graalvm.buildtools.native") version "0.9.16"
 }
 
-group = "io.mikael.poc"
+group = "io.mikael.px2"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -21,14 +21,14 @@ tasks.getByName<Test>("test") {
 
 tasks.withType<Jar> {
     manifest {
-        attributes["Main-Class"] = "io.mikael.poc.Main"
+        attributes["Main-Class"] = "io.mikael.px2.Main"
     }
 }
 
 graalvmNative {
     binaries {
         named("main") {
-            mainClass.set("io.mikael.poc.Main")
+            mainClass.set("io.mikael.px2.Main")
             javaLauncher.set(javaToolchains.launcherFor {
                 languageVersion.set(JavaLanguageVersion.of(17))
                 vendor.set(JvmVendorSpec.matching("GraalVM Community"))
