@@ -3,6 +3,7 @@ package io.mikael.px2;
 import io.mikael.px2.dto.PxParserState;
 import io.mikael.px2.dto.PxHeaderRow;
 import io.mikael.px2.dto.RowAccumulator;
+import io.mikael.px2.io.LocklessReader;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static io.mikael.px2.io.LocklessReader.EOF;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
@@ -18,13 +20,7 @@ public class PxParser {
     /* Maximum width, in characters, the string representation of a decimal number can be. */
     public static final int DATA_VALUE_WIDTH = 128;
 
-    public static final int PAGE_SIZE = 4096;
-
-    protected final char[] readBuffer = new char[PAGE_SIZE + 128];
-
-    protected int readOffset = 0;
-
-    protected int readLength = 0;
+    private final LocklessReader reader;
 
     protected final StatCubeWriter writer;
 
@@ -34,8 +30,9 @@ public class PxParser {
 
     protected List<PxHeaderRow> headers = new ArrayList<>();
 
-    public PxParser(final StatCubeWriter writer) {
+    public PxParser(final StatCubeWriter writer, final LocklessReader reader) {
         this.writer = writer;
+        this.reader = reader;
     }
 
     private List<String> header(
@@ -52,9 +49,8 @@ public class PxParser {
         return this.header("VALUES", "", singletonList(subkey));
     }
 
-    public void parseHeader(final BufferedReader input) throws IOException {
-        for (int i = input.read(); i != -1; i = input.read()) {
-            final char c = (char) i;
+    public void parseHeader() throws IOException {
+        for (char c = reader.read(); c != EOF; c = reader.read()) {
             final var inQuotes = this.state.quotes % 2 == 1;
             final var inParenthesis = this.state.parenthesisOpen > this.state.parenthesisClose;
             final var inKey = this.state.semicolons == this.state.equals;
@@ -153,7 +149,7 @@ public class PxParser {
         return CartesianProduct.of(headingValues);
     }
 
-    public void parseDataDense(final BufferedReader input) throws IOException {
+    public void parseDataDense() throws IOException {
         final var ds = this.denseStub();
         final var headingFlattener = this.denseHeading();
         final var headingWidth = headingFlattener.permutationCount;
@@ -165,30 +161,27 @@ public class PxParser {
         int bufLength = 0;
         int currentValue = 0;
 
-        for (int i = input.read(readBuffer); i != -1; i = input.read(readBuffer)) {
-            for (int j = 0; j < i; j++) {
-                final char c = readBuffer[j];
-                final var base = DATA_VALUE_WIDTH * currentValue;
-                if (c == '"') {
-                    continue;
+        for (char c = reader.read(); c != EOF; c = reader.read()) {
+            final var base = DATA_VALUE_WIDTH * currentValue;
+            if (c == '"') {
+                continue;
 
-                } else if (c == ' ' || c == '\n' || c == '\r' || c == ';') {
-                    if (bufLength > 0) {
-                        valueLengths[currentValue] = bufLength;
-                        bufLength = 0;
-                        currentValue += 1;
-                    }
-                    if (currentValue == headingWidth) {
-                        currentValue = 0;
-                        final var currentStubs = ds.stubFlattener.next();
-                        this.writer.writeRow(currentStubs, buffer, valueLengths, headingWidth);
-                    }
-
-                } else {
-                    buffer[base + bufLength] = c;
-                    bufLength += 1;
-
+            } else if (c == ' ' || c == '\n' || c == '\r' || c == ';') {
+                if (bufLength > 0) {
+                    valueLengths[currentValue] = bufLength;
+                    bufLength = 0;
+                    currentValue += 1;
                 }
+                if (currentValue == headingWidth) {
+                    currentValue = 0;
+                    final var currentStubs = ds.stubFlattener.next();
+                    this.writer.writeRow(currentStubs, buffer, valueLengths, headingWidth);
+                }
+
+            } else {
+                buffer[base + bufLength] = c;
+                bufLength += 1;
+
             }
         }
 
