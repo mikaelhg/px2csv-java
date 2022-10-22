@@ -1,6 +1,7 @@
 package io.mikael.px2;
 
 import io.mikael.px2.io.LocklessReader;
+import io.mikael.px2.io.CubeCsvWriter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -22,11 +23,11 @@ public class ParseTest {
              var stringWriter = new StringWriter();
              var output = new BufferedWriter(stringWriter))
         {
-            final var writer = new StatCubeCsvWriter(output);
+            final var writer = new CubeCsvWriter(output);
             final var reader = new LocklessReader(input);
             final var parser = new PxParser(writer, reader);
             parser.parseHeader();
-            parser.parseDataDense();
+            parser.parseData();
             output.flush();
             final var result = stringWriter.toString();
             final var expected = new String(csv.readAllBytes(), ISO_8859_1);

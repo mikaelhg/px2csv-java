@@ -1,6 +1,7 @@
 package io.mikael.px2;
 
 import io.mikael.px2.io.LocklessReader;
+import io.mikael.px2.io.CubeCsvWriter;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -13,11 +14,11 @@ public class Main {
         try (var input = Files.newBufferedReader(Paths.get(args[0]), ISO_8859_1);
              var output = Files.newBufferedWriter(Paths.get(args[1]), ISO_8859_1))
         {
-            final var writer = new StatCubeCsvWriter(output);
+            final var writer = new CubeCsvWriter(output);
             final var reader = new LocklessReader(input);
             final var parser = new PxParser(writer, reader);
             parser.parseHeader();
-            parser.parseDataDense();
+            parser.parseData();
         }
     }
 

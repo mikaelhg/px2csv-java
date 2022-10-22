@@ -5,7 +5,6 @@ import io.mikael.px2.dto.PxHeaderRow;
 import io.mikael.px2.dto.RowAccumulator;
 import io.mikael.px2.io.LocklessReader;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +21,7 @@ public class PxParser {
 
     private final LocklessReader reader;
 
-    protected final StatCubeWriter writer;
+    protected final CubeWriter writer;
 
     protected final PxParserState state = new PxParserState();
 
@@ -30,14 +29,13 @@ public class PxParser {
 
     protected List<PxHeaderRow> headers = new ArrayList<>();
 
-    public PxParser(final StatCubeWriter writer, final LocklessReader reader) {
+    public PxParser(final CubeWriter writer, final LocklessReader reader) {
         this.writer = writer;
         this.reader = reader;
     }
 
     private List<String> header(
-            final String keyword, final String language, final List<String> subkeys)
-    {
+            final String keyword, final String language, final List<String> subkeys) {
         return headers.stream()
                 .filter((h) -> Objects.equals(keyword, h.keyword())
                         && Objects.equals(language, h.language())
@@ -135,7 +133,8 @@ public class PxParser {
         }
     }
 
-    public record DenseStub(List<String> stub, CartesianProduct stubFlattener, int stubWidth) {}
+    public record DenseStub(List<String> stub, CartesianProduct stubFlattener, int stubWidth) {
+    }
 
     public DenseStub denseStub() {
         final var stub = this.header("STUB", "", emptyList());
@@ -149,14 +148,14 @@ public class PxParser {
         return CartesianProduct.of(headingValues);
     }
 
-    public void parseDataDense() throws IOException {
+    private void parseDataDense() throws IOException {
         final var ds = this.denseStub();
         final var headingFlattener = this.denseHeading();
         final var headingWidth = headingFlattener.permutationCount;
 
         this.writer.writeHeading(ds.stub, headingFlattener);
 
-        final var buffer = new char[headingWidth*DATA_VALUE_WIDTH];
+        final var buffer = new char[headingWidth * DATA_VALUE_WIDTH];
         final var valueLengths = new int[headingWidth];
         int bufLength = 0;
         int currentValue = 0;
@@ -186,6 +185,18 @@ public class PxParser {
         }
 
         this.writer.writeFooting();
+    }
+
+    private void parseDataSparse() throws IOException {
+        throw new RuntimeException("SPARSE PX DATA (KEYS) READING NOT IMPLEMENTED!!!");
+    }
+
+    public void parseData() throws IOException {
+        if (headers.stream().anyMatch((h) -> "KEYS".equals(h.keyword()))) {
+            this.parseDataSparse();
+        } else {
+            this.parseDataDense();
+        }
     }
 
 }

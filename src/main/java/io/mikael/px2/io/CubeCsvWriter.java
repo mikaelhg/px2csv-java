@@ -1,4 +1,7 @@
-package io.mikael.px2;
+package io.mikael.px2.io;
+
+import io.mikael.px2.CartesianProduct;
+import io.mikael.px2.CubeWriter;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -9,7 +12,7 @@ import java.util.stream.Collectors;
 
 import static io.mikael.px2.PxParser.DATA_VALUE_WIDTH;
 
-public final class StatCubeCsvWriter implements StatCubeWriter {
+public final class CubeCsvWriter implements CubeWriter {
 
     /* This is how you crash your program on unexpected inputs. */
     private static final int ARBITRARY_BUFFER_SIZE = 4096;
@@ -20,7 +23,7 @@ public final class StatCubeCsvWriter implements StatCubeWriter {
 
     private final BufferedWriter bufferedWriter;
 
-    public StatCubeCsvWriter(final BufferedWriter bufferedWriter) {
+    public CubeCsvWriter(final BufferedWriter bufferedWriter) {
         this.bufferedWriter = bufferedWriter;
     }
 
@@ -53,11 +56,6 @@ public final class StatCubeCsvWriter implements StatCubeWriter {
         }
         out.put('\n');
         bufferedWriter.write(out.array(), out.arrayOffset(), out.position());
-    }
-
-    @Override
-    public void writeFooting() {
-
     }
 
 }
