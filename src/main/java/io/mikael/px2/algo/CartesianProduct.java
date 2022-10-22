@@ -1,4 +1,4 @@
-package io.mikael.px2;
+package io.mikael.px2.algo;
 
 import java.util.Arrays;
 import java.util.Iterator;

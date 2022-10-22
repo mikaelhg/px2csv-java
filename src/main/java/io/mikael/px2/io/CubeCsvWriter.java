@@ -1,6 +1,6 @@
 package io.mikael.px2.io;
 
-import io.mikael.px2.CartesianProduct;
+import io.mikael.px2.algo.CartesianProduct;
 import io.mikael.px2.CubeWriter;
 
 import java.io.BufferedWriter;

@@ -1,5 +1,6 @@
 package io.mikael.px2;
 
+import io.mikael.px2.algo.CartesianProduct;
 import io.mikael.px2.dto.PxParserState;
 import io.mikael.px2.dto.PxHeaderRow;
 import io.mikael.px2.dto.RowAccumulator;

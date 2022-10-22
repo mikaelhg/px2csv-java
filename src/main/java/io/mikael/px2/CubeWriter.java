@@ -1,5 +1,7 @@
 package io.mikael.px2;
 
+import io.mikael.px2.algo.CartesianProduct;
+
 import java.io.IOException;
 import java.util.List;
 

@@ -1,5 +1,6 @@
 package io.mikael.px2;
 
+import io.mikael.px2.algo.CartesianProduct;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
