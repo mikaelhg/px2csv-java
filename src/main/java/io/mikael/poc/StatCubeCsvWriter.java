@@ -8,7 +8,9 @@ import java.util.stream.Collectors;
 
 import static io.mikael.poc.PxParser.DATA_VALUE_WIDTH;
 
-public class StatCubeCsvWriter implements StatCubeWriter {
+public final class StatCubeCsvWriter implements StatCubeWriter {
+
+    private static final String DELIMITER = "\";\"";
 
     private final BufferedWriter out;
 
@@ -19,11 +21,11 @@ public class StatCubeCsvWriter implements StatCubeWriter {
     @Override
     public void writeHeading(List<String> stub, CartesianProduct headingFlattener) throws IOException {
         out.write("\"");
-        out.write(String.join("\";\"", stub));
-        out.write("\";\"");
+        out.write(String.join(DELIMITER, stub));
+        out.write(DELIMITER);
         out.write(Arrays.stream(headingFlattener.all())
                 .map((ss) -> String.join(" ", ss))
-                .collect(Collectors.joining("\";\"")));
+                .collect(Collectors.joining(DELIMITER)));
         out.write("\"\n");
     }
 
@@ -31,9 +33,10 @@ public class StatCubeCsvWriter implements StatCubeWriter {
     public void writeRow(final String[] stubs, final char[] buffer,
                          final int[] valueLengths, final int headingWidth) throws IOException
     {
-        out.write("\"");
-        out.write(String.join("\";\"", stubs));
-        out.write("\";");
+        out.write('"');
+        out.write(String.join(DELIMITER, stubs));
+        out.write('"');
+        out.write(';');
         for (int i = 0; i < headingWidth; i++) {
             final var offset = i * DATA_VALUE_WIDTH;
             out.write(buffer, offset, valueLengths[i]);

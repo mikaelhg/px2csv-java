@@ -28,6 +28,7 @@ tasks.withType<Jar> {
 graalvmNative {
     binaries {
         named("main") {
+            mainClass.set("io.mikael.poc.Main")
             javaLauncher.set(javaToolchains.launcherFor {
                 languageVersion.set(JavaLanguageVersion.of(17))
                 vendor.set(JvmVendorSpec.matching("GraalVM Community"))

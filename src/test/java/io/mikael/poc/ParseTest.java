@@ -7,6 +7,9 @@ import java.io.*;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
+/**
+ * Functional end to end test for the PX to CSV converter.
+ */
 public class ParseTest {
 
     @Test
