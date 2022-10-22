@@ -152,33 +152,36 @@ public class PxParser {
 
         this.writer.writeHeading(ds.stub, headingFlattener);
 
+        final var readBuffer = new char[4096];
         final var buffer = new char[headingWidth*DATA_VALUE_WIDTH];
         final var valueLengths = new int[headingWidth];
         int bufLength = 0;
         int currentValue = 0;
 
-        for (int i = input.read(); i != -1; i = input.read()) {
-            final char c = (char) i;
-            final var base = DATA_VALUE_WIDTH * currentValue;
-            if (c == '"') {
-                continue;
+        for (int i = input.read(readBuffer); i != -1; i = input.read(readBuffer)) {
+            for (int j = 0; j < i; j++) {
+                final char c = readBuffer[j];
+                final var base = DATA_VALUE_WIDTH * currentValue;
+                if (c == '"') {
+                    continue;
 
-            } else if (c == ' ' || c == '\n' || c == '\r' || c == ';') {
-                if (bufLength > 0) {
-                    valueLengths[currentValue] = bufLength;
-                    bufLength = 0;
-                    currentValue += 1;
+                } else if (c == ' ' || c == '\n' || c == '\r' || c == ';') {
+                    if (bufLength > 0) {
+                        valueLengths[currentValue] = bufLength;
+                        bufLength = 0;
+                        currentValue += 1;
+                    }
+                    if (currentValue == headingWidth) {
+                        currentValue = 0;
+                        final var currentStubs = ds.stubFlattener.next();
+                        this.writer.writeRow(currentStubs, buffer, valueLengths, headingWidth);
+                    }
+
+                } else {
+                    buffer[base + bufLength] = c;
+                    bufLength += 1;
+
                 }
-                if (currentValue == headingWidth) {
-                    currentValue = 0;
-                    final var currentStubs = ds.stubFlattener.next();
-                    this.writer.writeRow(currentStubs, buffer, valueLengths, headingWidth);
-                }
-
-            } else {
-                buffer[base + bufLength] = c;
-                bufLength += 1;
-
             }
         }
 
