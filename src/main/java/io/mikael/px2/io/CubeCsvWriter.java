@@ -44,7 +44,12 @@ public final class CubeCsvWriter implements CubeWriter {
     {
         out.clear();
         out.put('"');
-        out.put(String.join(DELIMITER, stubs));
+        for (int i = 0; i < stubs.length; i++) {
+            out.put(stubs[i]);
+            if (i < stubs.length - 1) {
+                out.put(DELIMITER);
+            }
+        }
         out.put('"');
         out.put(';');
         for (int i = 0; i < headingWidth; i++) {
