@@ -7,3 +7,5 @@ java -Xmx16m -Xms16m \
   -jar build/libs/px2csv-java-1.0-SNAPSHOT.jar \
      ./statfin_vtp_pxt_124l.px /dev/null
 ```
+
+https://github.com/apache/parquet-mr/blob/master/parquet-cli/src/main/java/org/apache/parquet/cli/csv/AvroCSV.java

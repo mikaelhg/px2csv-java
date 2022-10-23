@@ -25,6 +25,13 @@ tasks.withType<Jar> {
     }
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+        vendor.set(JvmVendorSpec.matching("GraalVM Community"))
+    }
+}
+
 graalvmNative {
     binaries {
         named("main") {
