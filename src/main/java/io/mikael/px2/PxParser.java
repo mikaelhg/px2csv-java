@@ -15,22 +15,22 @@ import static io.mikael.px2.io.LocklessReader.EOF;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
-public class PxParser {
+public final class PxParser {
 
     /* Maximum width, in characters, the string representation of a decimal number can be. */
     public static final int DATA_VALUE_WIDTH = 128;
 
     private final LocklessReader reader;
 
-    protected final CubeWriter writer;
+    private final CubeWriter writer;
 
-    protected final PxParserState state = new PxParserState();
+    private final PxParserState state = new PxParserState();
 
-    protected RowAccumulator row = new RowAccumulator();
+    private RowAccumulator row = new RowAccumulator();
 
-    protected List<PxHeaderRow> headers = new ArrayList<>();
+    private final List<PxHeaderRow> headers = new ArrayList<>();
 
-    public PxParser(final CubeWriter writer, final LocklessReader reader) {
+    public PxParser(final LocklessReader reader, final CubeWriter writer) {
         this.writer = writer;
         this.reader = reader;
     }

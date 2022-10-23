@@ -23,9 +23,9 @@ public class ParseTest {
              var stringWriter = new StringWriter();
              var output = new BufferedWriter(stringWriter))
         {
-            final var writer = new CubeCsvWriter(output);
             final var reader = new LocklessReader(input);
-            final var parser = new PxParser(writer, reader);
+            final var writer = new CubeCsvWriter(output);
+            final var parser = new PxParser(reader, writer);
             parser.parseHeader();
             parser.parseData();
             output.flush();
