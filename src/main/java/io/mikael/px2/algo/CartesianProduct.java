@@ -4,19 +4,19 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-public class CartesianProduct implements Iterator<String[]> {
+public final class CartesianProduct implements Iterator<String[]> {
 
-    public int cursor = 0;
+    private int cursor = 0;
 
-    public int[] counters;
+    private final int[] counters;
 
-    public final int length;
+    private final int length;
 
     public final int permutationCount;
 
-    public final int[] lengths;
+    private final int[] lengths;
 
-    public final String[][] lists;
+    private final String[][] lists;
 
     public static CartesianProduct of(final List<List<String>> input) {
         final var lists = new String[input.size()][];
