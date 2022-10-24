@@ -36,6 +36,7 @@ graalvmNative {
     binaries {
         named("main") {
             mainClass.set("io.mikael.px2.Main")
+            buildArgs.add("-H:+AddAllCharsets")
             javaLauncher.set(javaToolchains.launcherFor {
                 languageVersion.set(JavaLanguageVersion.of(17))
                 vendor.set(JvmVendorSpec.matching("GraalVM Community"))
