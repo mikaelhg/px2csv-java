@@ -11,6 +11,8 @@ repositories {
 }
 
 dependencies {
+    implementation("info.picocli:picocli:4.6.3")
+    annotationProcessor("info.picocli:picocli-codegen:4.6.3")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.0")
 }
@@ -23,6 +25,10 @@ tasks.withType<Jar> {
     manifest {
         attributes["Main-Class"] = "io.mikael.px2.Main"
     }
+}
+
+tasks.withType<JavaCompile> {
+    options.compilerArgs.add("-Aproject=${project.group}/${project.name}")
 }
 
 java {

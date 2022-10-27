@@ -2,19 +2,46 @@ package io.mikael.px2;
 
 import io.mikael.px2.io.LocklessReader;
 import io.mikael.px2.io.CubeCsvWriter;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
+import java.io.File;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.concurrent.Callable;
 
-public class Main {
+@Command(name = "px2csv")
+class Main implements Callable<Integer> {
+
+    @Parameters(index = "0", arity = "1", description = "Input file.")
+    private File inputFile;
+
+    @Parameters(index = "1", arity = "1", description = "Output file.")
+    private File outputFile;
+
+    @Option(names = {"-c", "--charset"}, arity = "0..1")
+    private Charset charset = StandardCharsets.ISO_8859_1;
+
+    @Option(names = "-n", arity = "0..1")
+    private Integer iterations = 1;
+
+    @Option(names = { "-h", "--help" }, usageHelp = true, description = "display a help message")
+    private boolean helpRequested = false;
 
     public static void main(final String[] args) throws Exception {
-        final var charset = Charset.forName(args[2]);
-        final var iterations = Integer.parseInt(args[3]);
+        final var exitCode = new CommandLine(new Main()).execute(args);
+        System.exit(exitCode);
+    }
+
+    @Override
+    public Integer call() throws Exception {
         for (int i = 0; i < iterations; i++) {
-            try (var input = Files.newBufferedReader(Paths.get(args[0]), charset);
-                 var output = Files.newBufferedWriter(Paths.get(args[1]), charset))
+            try (var input = Files.newBufferedReader(inputFile.toPath(), charset);
+                 var output = Files.newBufferedWriter(outputFile.toPath(), charset))
             {
                 final var reader = new LocklessReader(input);
                 final var writer = new CubeCsvWriter(output);
@@ -23,6 +50,7 @@ public class Main {
                 parser.parseData();
             }
         }
+        return 0;
     }
 
 }
