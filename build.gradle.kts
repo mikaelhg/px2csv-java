@@ -1,6 +1,7 @@
 plugins {
     java
     id("org.graalvm.buildtools.native") version "0.9.16"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
 group = "io.mikael.px2"
@@ -25,6 +26,12 @@ tasks.withType<Jar> {
     manifest {
         attributes["Main-Class"] = "io.mikael.px2.Main"
     }
+}
+
+tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
+    archiveBaseName.set("px2csv")
+    archiveClassifier.set("")
+    archiveVersion.set("")
 }
 
 tasks.withType<JavaCompile> {
