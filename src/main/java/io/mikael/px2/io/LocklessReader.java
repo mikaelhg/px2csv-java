@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.io.Reader;
 
 /**
- * Because of the lock elision regressions, we'll just build
- * an explicitly nonlocking BufferedReader implementation.
+ * Because of JVM lock elision regressions, we have an explicitly lock-free
+ * simplified BufferedReader implementation.
  */
 public final class LocklessReader {
 
@@ -38,6 +38,10 @@ public final class LocklessReader {
             }
         }
         return EOF;
+    }
+
+    public void switchDecoder(final String charsetName) {
+        System.err.printf("Should change decoder charset to %s, but can't yet.%n", charsetName);
     }
 
 }

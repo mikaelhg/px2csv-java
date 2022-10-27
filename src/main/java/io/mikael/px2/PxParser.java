@@ -101,7 +101,7 @@ public final class PxParser {
                 throw new RuntimeException("found a second equals sign without a matching semicolon, unexpected keyword terminator");
 
             } else if (c == '=' && inKey && !inQuotes) {
-                if (this.row.keyword.toString().equals("DATA")) {
+                if ("DATA".equals(this.row.keyword.toString())) {
                     return;
                 }
                 this.state.equals += 1;
@@ -114,8 +114,12 @@ public final class PxParser {
                     this.row.values.add(this.row.value.toString());
                 }
                 this.state.semicolons += 1;
-                this.headers.add(this.row.toPxHeaderRow());
+                final var headerRow = this.row.toPxHeaderRow();
+                this.headers.add(headerRow);
                 this.row = new RowAccumulator();
+                if ("CODEPAGE".equals(headerRow.keyword())) {
+                    this.reader.switchDecoder(headerRow.values().get(0));
+                }
                 continue;
 
             } else if (inSubkey) {
