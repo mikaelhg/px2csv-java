@@ -25,11 +25,14 @@ public final class LocklessReader {
         this.backingReader = backingReader;
     }
 
+    /**
+     * This method will be called in a very tight parser loop.
+     */
     public char read() throws IOException {
-        if (-1 == readLength) {
-            return EOF;
-        } else if (readOffset < readLength) {
+        if (readOffset < readLength) {
             return readBuffer[readOffset++];
+        } else if (-1 == readLength) {
+            return EOF;
         } else {
             readOffset = 0;
             readLength = backingReader.read(readBuffer);
