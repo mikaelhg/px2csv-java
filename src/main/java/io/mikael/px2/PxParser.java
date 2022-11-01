@@ -7,6 +7,7 @@ import io.mikael.px2.dto.RowAccumulator;
 import io.mikael.px2.io.LocklessReader;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -118,7 +119,9 @@ public final class PxParser {
                 this.headers.add(headerRow);
                 this.row = new RowAccumulator();
                 if ("CODEPAGE".equals(headerRow.keyword()) && this.state.codepageHeaders < 1) {
-                    this.reader.switchDecoder(headerRow.values().get(0));
+                    final var charsetName = headerRow.values().get(0).toUpperCase();
+                    final var charsetDecoder = Charset.forName(charsetName).newDecoder();
+                    this.reader.switchCharsetDecoder(charsetDecoder);
                     this.state = new PxParserState();
                     this.headers = new ArrayList<>();
                     this.state.codepageHeaders += 1;

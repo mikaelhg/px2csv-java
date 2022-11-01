@@ -10,6 +10,11 @@ import java.nio.charset.CharsetDecoder;
 /**
  * Because of JVM lock elision regressions, we have an explicitly lock-free
  * simplified BufferedReader implementation.
+ *
+ * Obviously not thread-safe. Theoretically if you pass an instance from one
+ * thread to another, and especially if you operate the instance in a tight
+ * loop, you need to make sure that you flush your L2/3 cache lines by caging
+ * any access in happens-before barriers, such as synchronized. Read the JMM.
  */
 public final class LocklessReader {
 
@@ -19,7 +24,7 @@ public final class LocklessReader {
 
     private final CharBuffer characters = CharBuffer.allocate(2 * PAGE_SIZE);
 
-    private final ByteBuffer bytes = ByteBuffer.allocate(2 * PAGE_SIZE);
+    private final ByteBuffer bytes = ByteBuffer.allocateDirect(2 * PAGE_SIZE);
 
     private int readLength = 0;
 
@@ -27,11 +32,13 @@ public final class LocklessReader {
 
     private CharsetDecoder decoder;
 
-    private boolean defaultCharset = true;
+    private boolean isDefaultCodepage = true;
 
     public LocklessReader(final ReadableByteChannel channel, final Charset charset) {
         this.channel = channel;
         this.decoder = charset.newDecoder();
+        this.characters.limit(0);
+        bytes.flip();
     }
 
     /**
@@ -49,25 +56,28 @@ public final class LocklessReader {
             readLength = channel.read(bytes);
             bytes.flip();
 
-            characters.clear();
-            decoder.decode(bytes, characters, false);
-            characters.flip();
-
             if (-1 != readLength) {
+                characters.clear();
+                final var result = decoder.decode(bytes, characters,
+                        bytes.limit() != bytes.capacity());
+
+                // bytes.compact(); // might contain partially read multibyte characters
+                characters.flip();
+
                 return characters.get();
             }
         }
         return EOF;
     }
 
-    public void switchDecoder(final String charsetName) {
-        if (this.defaultCharset) {
-            this.defaultCharset = false;
-            this.decoder = Charset.forName(charsetName.toUpperCase()).newDecoder();
+    public void switchCharsetDecoder(final CharsetDecoder charsetDecoder) {
+        if (this.isDefaultCodepage) {
+            this.isDefaultCodepage = false;
+            this.decoder = charsetDecoder;
             characters.clear();
             bytes.flip();
             bytes.position(0);
-            decoder.decode(bytes, characters, false);
+            decoder.decode(bytes, characters, bytes.limit() != bytes.capacity());
             characters.flip();
         }
     }

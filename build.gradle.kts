@@ -41,7 +41,7 @@ tasks.withType<JavaCompile> {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(19))
         vendor.set(JvmVendorSpec.matching("GraalVM Community"))
     }
 }
