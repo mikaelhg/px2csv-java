@@ -24,11 +24,11 @@ public final class PxParser {
 
     private final CubeWriter writer;
 
-    private final PxParserState state = new PxParserState();
+    private PxParserState state = new PxParserState();
 
     private RowAccumulator row = new RowAccumulator();
 
-    private final List<PxHeaderRow> headers = new ArrayList<>();
+    private List<PxHeaderRow> headers = new ArrayList<>();
 
     public PxParser(final LocklessReader reader, final CubeWriter writer) {
         this.writer = writer;
@@ -117,8 +117,11 @@ public final class PxParser {
                 final var headerRow = this.row.toPxHeaderRow();
                 this.headers.add(headerRow);
                 this.row = new RowAccumulator();
-                if ("CODEPAGE".equals(headerRow.keyword())) {
+                if ("CODEPAGE".equals(headerRow.keyword()) && this.state.codepageHeaders < 1) {
                     this.reader.switchDecoder(headerRow.values().get(0));
+                    this.state = new PxParserState();
+                    this.headers = new ArrayList<>();
+                    this.state.codepageHeaders += 1;
                 }
                 continue;
 
@@ -147,7 +150,7 @@ public final class PxParser {
         return new DenseStub(stub, CartesianProduct.of(stubValues), stub.size());
     }
 
-    public CartesianProduct denseHeading() {
+    private CartesianProduct denseHeading() {
         final var heading = this.header("HEADING", "", emptyList());
         final var headingValues = heading.stream().map(this::valueHeader).toList();
         return CartesianProduct.of(headingValues);

@@ -1,3 +1,7 @@
+CHARSET="ANSI";
+AXIS-VERSION="2006";
+CODEPAGE="iso-8859-15";
+LANGUAGE="fi¤";
 STUB="a","b","c";
 HEADING="e","f","g";
 VALUES("a")="a1","a2","a3";

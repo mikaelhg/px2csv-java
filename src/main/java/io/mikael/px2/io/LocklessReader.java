@@ -1,7 +1,11 @@
 package io.mikael.px2.io;
 
 import java.io.IOException;
-import java.io.Reader;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 
 /**
  * Because of JVM lock elision regressions, we have an explicitly lock-free
@@ -13,38 +17,67 @@ public final class LocklessReader {
 
     public static final char EOF = (char) -1;
 
-    private final char[] readBuffer = new char[2 * PAGE_SIZE];
+    private final CharBuffer characters = CharBuffer.allocate(2 * PAGE_SIZE);
 
-    private int readOffset = 0;
+    private final ByteBuffer bytes = ByteBuffer.allocate(2 * PAGE_SIZE);
 
-    private int readLength = 0;
+    private int readBytesLength = 0;
 
-    private final Reader backingReader;
+    private int charactersLength = 0;
 
-    public LocklessReader(final Reader backingReader) {
-        this.backingReader = backingReader;
+    private final SeekableByteChannel channel;
+
+    private Charset charset;
+
+    private CharsetDecoder decoder;
+
+    private boolean defaultCharset = true;
+
+    public LocklessReader(final SeekableByteChannel channel, final Charset charset) {
+        this.channel = channel;
+        this.charset = charset;
+        this.decoder = charset.newDecoder();
     }
 
     /**
      * This method will be called in a very tight parser loop.
      */
     public char read() throws IOException {
-        if (readOffset < readLength) {
-            return readBuffer[readOffset++];
-        } else if (-1 == readLength) {
+        if (characters.position() < charactersLength) {
+            return characters.get();
+
+        } else if (-1 == readBytesLength) {
             return EOF;
+
         } else {
-            readOffset = 0;
-            readLength = backingReader.read(readBuffer);
-            if (-1 != readLength) {
-                return readBuffer[readOffset++];
+            bytes.clear();
+            readBytesLength = channel.read(bytes);
+            bytes.flip();
+
+            characters.clear();
+            decoder.decode(bytes, characters, false);
+            charactersLength = characters.position();
+            characters.flip();
+
+            if (-1 != readBytesLength) {
+                return characters.get();
             }
         }
         return EOF;
     }
 
     public void switchDecoder(final String charsetName) {
-        System.err.printf("Should change decoder charset to %s, but can't yet.%n", charsetName);
+        if (this.defaultCharset) {
+            this.defaultCharset = false;
+            this.charset = Charset.forName(charsetName.toUpperCase());
+            this.decoder = charset.newDecoder();
+            characters.clear();
+            bytes.flip();
+            bytes.position(0);
+            final var result = decoder.decode(bytes, characters, false);
+            charactersLength = characters.position();
+            characters.flip();
+        }
     }
 
 }

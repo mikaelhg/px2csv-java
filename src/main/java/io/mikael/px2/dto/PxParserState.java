@@ -16,4 +16,6 @@ public final class PxParserState {
 
     public int squareBracketClose;
 
+    public int codepageHeaders = 0;
+
 }

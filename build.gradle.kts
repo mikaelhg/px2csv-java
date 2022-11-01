@@ -32,6 +32,7 @@ tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
     archiveBaseName.set("px2csv")
     archiveClassifier.set("")
     archiveVersion.set("")
+    minimize()
 }
 
 tasks.withType<JavaCompile> {
@@ -51,7 +52,7 @@ graalvmNative {
             mainClass.set("io.mikael.px2.Main")
             buildArgs.add("-H:+AddAllCharsets")
             javaLauncher.set(javaToolchains.launcherFor {
-                languageVersion.set(JavaLanguageVersion.of(17))
+                languageVersion.set(JavaLanguageVersion.of(19))
                 vendor.set(JvmVendorSpec.matching("GraalVM Community"))
             })
         }

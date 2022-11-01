@@ -11,7 +11,6 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
 @Command(name = "px2csv")
@@ -26,7 +25,7 @@ class Main implements Callable<Integer> {
     @Option(names = {"-c", "--charset"}, arity = "0..1")
     private Charset charset = StandardCharsets.ISO_8859_1;
 
-    @Option(names = "-n", arity = "0..1")
+    @Option(names = "-n", arity = "0..1", description = "how many times to execute, for testing")
     private Integer iterations = 1;
 
     @Option(names = { "-h", "--help" }, usageHelp = true, description = "display a help message")
@@ -40,10 +39,10 @@ class Main implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         for (int i = 0; i < iterations; i++) {
-            try (var input = Files.newBufferedReader(inputFile.toPath(), charset);
+            try (var input = Files.newByteChannel(inputFile.toPath());
                  var output = Files.newBufferedWriter(outputFile.toPath(), charset))
             {
-                final var reader = new LocklessReader(input);
+                final var reader = new LocklessReader(input, charset);
                 final var writer = new CubeCsvWriter(output);
                 final var parser = new PxParser(reader, writer);
                 parser.parseHeader();
