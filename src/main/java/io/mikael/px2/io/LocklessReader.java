@@ -3,7 +3,7 @@ package io.mikael.px2.io;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.channels.SeekableByteChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 
@@ -21,21 +21,16 @@ public final class LocklessReader {
 
     private final ByteBuffer bytes = ByteBuffer.allocate(2 * PAGE_SIZE);
 
-    private int readBytesLength = 0;
+    private int readLength = 0;
 
-    private int charactersLength = 0;
-
-    private final SeekableByteChannel channel;
-
-    private Charset charset;
+    private final ReadableByteChannel channel;
 
     private CharsetDecoder decoder;
 
     private boolean defaultCharset = true;
 
-    public LocklessReader(final SeekableByteChannel channel, final Charset charset) {
+    public LocklessReader(final ReadableByteChannel channel, final Charset charset) {
         this.channel = channel;
-        this.charset = charset;
         this.decoder = charset.newDecoder();
     }
 
@@ -43,23 +38,22 @@ public final class LocklessReader {
      * This method will be called in a very tight parser loop.
      */
     public char read() throws IOException {
-        if (characters.position() < charactersLength) {
+        if (characters.hasRemaining()) {
             return characters.get();
 
-        } else if (-1 == readBytesLength) {
+        } else if (-1 == readLength) {
             return EOF;
 
         } else {
-            bytes.clear();
-            readBytesLength = channel.read(bytes);
+            bytes.compact();
+            readLength = channel.read(bytes);
             bytes.flip();
 
             characters.clear();
             decoder.decode(bytes, characters, false);
-            charactersLength = characters.position();
             characters.flip();
 
-            if (-1 != readBytesLength) {
+            if (-1 != readLength) {
                 return characters.get();
             }
         }
@@ -69,13 +63,11 @@ public final class LocklessReader {
     public void switchDecoder(final String charsetName) {
         if (this.defaultCharset) {
             this.defaultCharset = false;
-            this.charset = Charset.forName(charsetName.toUpperCase());
-            this.decoder = charset.newDecoder();
+            this.decoder = Charset.forName(charsetName.toUpperCase()).newDecoder();
             characters.clear();
             bytes.flip();
             bytes.position(0);
-            final var result = decoder.decode(bytes, characters, false);
-            charactersLength = characters.position();
+            decoder.decode(bytes, characters, false);
             characters.flip();
         }
     }
