@@ -47,23 +47,14 @@ public final class LocklessReader {
     public char read() throws IOException {
         if (characters.hasRemaining()) {
             return characters.get();
-
-        } else if (-1 == readLength) {
-            return EOF;
-
-        } else {
-            bytes.compact();
+        } else if (-1 < readLength) {
+            bytes.compact();  // might contain partially read multibyte characters
             readLength = channel.read(bytes);
             bytes.flip();
-
             if (-1 != readLength) {
                 characters.clear();
-                final var result = decoder.decode(bytes, characters,
-                        bytes.limit() != bytes.capacity());
-
-                // bytes.compact(); // might contain partially read multibyte characters
+                decoder.decode(bytes, characters, bytes.limit() != bytes.capacity());
                 characters.flip();
-
                 return characters.get();
             }
         }
