@@ -10,7 +10,7 @@ import java.nio.charset.CharsetDecoder;
 /**
  * Because of JVM lock elision regressions, we have an explicitly lock-free
  * simplified BufferedReader implementation.
- *
+ * <br/><br/>
  * Obviously not thread-safe. Theoretically if you pass an instance from one
  * thread to another, and especially if you operate the instance in a tight
  * loop, you need to make sure that you flush your L2/3 cache lines by caging
@@ -20,7 +20,9 @@ public final class LocklessReader {
 
     public static final int PAGE_SIZE = 4096;
 
-    public static final char EOF = (char) -1;
+    private static final char EOF = (char) -1;
+
+    public volatile boolean reading = true;
 
     private final CharBuffer characters = CharBuffer.allocate(2 * PAGE_SIZE);
 
@@ -48,17 +50,25 @@ public final class LocklessReader {
         if (characters.hasRemaining()) {
             return characters.get();
         } else if (-1 < readLength) {
-            bytes.compact();  // might contain partially read multibyte characters
-            readLength = channel.read(bytes);
-            bytes.flip();
-            if (-1 != readLength) {
-                characters.clear();
-                decoder.decode(bytes, characters, bytes.limit() != bytes.capacity());
-                characters.flip();
-                return characters.get();
-            }
+            return readNextPage();
         }
+        this.reading = false;
         return EOF;
+    }
+
+    private char readNextPage() throws IOException {
+        bytes.compact();  // might contain partially read multibyte characters
+        readLength = channel.read(bytes);
+        bytes.flip();
+        if (-1 == readLength) {
+            this.reading = false;
+            return EOF;
+        } else {
+            characters.clear();
+            decoder.decode(bytes, characters, bytes.limit() != bytes.capacity());
+            characters.flip();
+            return characters.get();
+        }
     }
 
     public void switchCharsetDecoder(final CharsetDecoder charsetDecoder) {

@@ -10,9 +10,9 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
-import static io.mikael.px2.io.LocklessReader.EOF;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
@@ -37,7 +37,9 @@ public final class PxParser {
     }
 
     private List<String> header(
-            final String keyword, final String language, final List<String> subkeys) {
+            final String keyword, final String language, final List<String> subkeys)
+            throws NoSuchElementException
+    {
         return headers.stream()
                 .filter((h) -> Objects.equals(keyword, h.keyword())
                         && Objects.equals(language, h.language())
@@ -50,7 +52,7 @@ public final class PxParser {
     }
 
     public void parseHeader() throws IOException {
-        for (char c = reader.read(); c != EOF; c = reader.read()) {
+        for (char c = reader.read(); reader.reading; c = reader.read()) {
             final var inQuotes = this.state.quotes % 2 == 1;
             final var inParenthesis = this.state.parenthesisOpen > this.state.parenthesisClose;
             final var inKey = this.state.semicolons == this.state.equals;
@@ -63,7 +65,8 @@ public final class PxParser {
             } else if ((c == '\n' || c == '\r') && inQuotes) {
                 throw new RuntimeException("there can't be newlines inside quoted strings");
 
-            } else if ((c == '\n' || c == '\r') && !inQuotes) {
+            } else if (c == '\n' || c == '\r') {
+                // ignore
                 continue;
 
             } else if (c == '[' && inKey && !inQuotes) {
@@ -102,7 +105,7 @@ public final class PxParser {
                 throw new RuntimeException("found a second equals sign without a matching semicolon, unexpected keyword terminator");
 
             } else if (c == '=' && inKey && !inQuotes) {
-                if ("DATA".equals(this.row.keyword.toString())) {
+                if ("DATA".contentEquals(this.row.keyword)) {
                     return;
                 }
                 this.state.equals += 1;
@@ -111,7 +114,7 @@ public final class PxParser {
                 throw new RuntimeException("found a semicolon without a matching equals sign, value terminator without keyword terminator");
 
             } else if (c == ';' && !inKey && !inQuotes) {
-                if (this.row.value.length() > 0) {
+                if (!this.row.value.isEmpty()) {
                     this.row.values.add(this.row.value.toString());
                 }
                 this.state.semicolons += 1;
@@ -119,14 +122,13 @@ public final class PxParser {
                 this.headers.add(headerRow);
                 this.row = new RowAccumulator();
                 if ("CODEPAGE".equals(headerRow.keyword()) && this.state.codepageHeaders < 1) {
-                    final var charsetName = headerRow.values().get(0).toUpperCase();
+                    final var charsetName = headerRow.values().getFirst().toUpperCase();
                     final var charsetDecoder = Charset.forName(charsetName).newDecoder();
                     this.reader.switchCharsetDecoder(charsetDecoder);
                     this.state = new PxParserState();
                     this.headers = new ArrayList<>();
                     this.state.codepageHeaders += 1;
                 }
-                continue;
 
             } else if (inSubkey) {
                 this.row.subkey.append(c);
@@ -139,7 +141,6 @@ public final class PxParser {
 
             } else {
                 this.row.value.append(c);
-
             }
         }
     }
@@ -171,7 +172,7 @@ public final class PxParser {
         int bufLength = 0;
         int currentValue = 0;
 
-        for (char c = reader.read(); c != EOF; c = reader.read()) {
+        for (char c = reader.read(); reader.reading; c = reader.read()) {
             final var base = DATA_VALUE_WIDTH * currentValue;
             if (c == '"') {
                 continue;
